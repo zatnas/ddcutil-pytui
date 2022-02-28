@@ -1,6 +1,33 @@
+# import curses
+# 
+# def main(stdscr):
+#     stdscr.clear()
+# 
+#     pos_x = 0
+#     pos_y = 0
+#     size_x = curses.COLS - 1
+#     size_y = curses.LINES - 1
+#     win = curses.newwin(size_y, size_x, pos_y, pos_x)
+# 
+#     win.addstr(0, 0, f'ddcutil tui')
+# 
+#     stdscr.refresh()
+#     win.refresh()
+# 
+#     stdscr.getkey()
+# 
+# curses.wrapper(main)
+
 import subprocess
+import pprint
+
+async def get_display_vcp(display_index:int=None, opcode:str=None):
+    getvcp_command = subprocess.run(["ddcutil", "-b", str(index), "getvcp", opcode], capture_output=True)
+    getvcp_output = getvcp_command.stdout.decode()
+    print(getvcp_output)
+
 def get_display_capabilities(index:int=None):
-    capabilities_command = subprocess.run(["ddcutil", "-b", "1", "capabilities"], capture_output=True)
+    capabilities_command = subprocess.run(["ddcutil", "-b", str(index), "capabilities"], capture_output=True)
     capabilities_output = capabilities_command.stdout.decode()
     features = []
     feature = {}
@@ -33,6 +60,10 @@ def get_display_capabilities(index:int=None):
                 }
                 for value in line.split()[1:-2]
             ]
+    for feature in features:
+        if feature["name"] == "Manufacturer specific feature":
+            continue
+        print(feature)
     return features
 
 def get_displays():
@@ -55,6 +86,8 @@ def get_displays():
         elif "VCP version" in line:
             display["vcp_version"] = line.split()[2]
     displays.append({**display})
+    for display in displays:
+        get_display_capabilities(display["index"])
     return displays
 
 displays = get_displays()
